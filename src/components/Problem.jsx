@@ -7,7 +7,7 @@ const Problem = ({ problem, onSubmit }) => {
 
   return (
     <div>
-      <h2>{problem?.title}</h2>
+      <h2>{problem?.question}</h2>
       <p>{problem?.description}</p>
       <button onClick={() => handleSubmit(/* user's answer */)}>Submit Answer</button>
     </div>

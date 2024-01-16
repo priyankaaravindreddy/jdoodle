@@ -4,37 +4,46 @@ import axios from "axios";
 import Problem from "./components/Problem";
 import Editor from "./components/Editor";
 import Result from "./components/Result";
+import { questions } from "./sample-php";
 
 const App = () => {
-  const [problems, setProblems] = useState([]);
+  const [problems, setProblems] = useState([...questions]);
   const [userAnswers, setUserAnswers] = useState([]);
   const [currentProblemIndex, setCurrentProblemIndex] = useState(0);
 
+  const submitAnswers = async (code, problems) => {
+    const apiEndpoint = "https://api.jdoodle.com/v1/execute";
+
+    try {
+      const response = await axios.post(apiEndpoint, {
+        clientId: "c0fad38eb03eaa700c9310748610fad1",
+        clientSecret:
+          "a209966846744088f30ca130dd6251a3647a7e6efc3a95f138b063a9fbdc4ca8",
+        script: code,
+        stdin: JSON.stringify(problems),
+        language: "javascript",
+        versionIndex: 0,
+      });
+
+      const apiResults = response.data;
+      console.log(apiResults);
+    } catch (error) {
+      console.error("Error calling JDoodle API:", error);
+    }
+  };
+
   useEffect(() => {
-    const submitAnswers = async (code, problems) => {
-      const apiEndpoint = "https://api.jdoodle.com/v1/execute";
-
-      try {
-        const response = await axios.post(apiEndpoint, {
-          clientId: "c0fad38eb03eaa700c9310748610fad1",
-          clientSecret:
-            "a209966846744088f30ca130dd6251a3647a7e6efc3a95f138b063a9fbdc4ca8",
-          script: code,
-          stdin: JSON.stringify(problems),
-          language: "javascript",
-          versionIndex: 0,
-        });
-
-        const apiResults = response.data;
-        console.log(apiResults);
-      } catch (error) {
-        console.error("Error calling JDoodle API:", error);
-      }
-    };
-
     submitAnswers('print("Hello, World!")', []);
   }, []);
 
+  const handleNextProblem = () => {
+    if (currentProblemIndex < problems.length - 1) {
+      setCurrentProblemIndex(currentProblemIndex + 1);
+    } else {
+      // Display results or submit answers using JDoodle's REST API
+      submitAnswers();
+    }
+  };
   const handleAnswerSubmission = (answer) => {
     setUserAnswers([...userAnswers, answer]);
     setCurrentProblemIndex(currentProblemIndex + 1);
@@ -46,6 +55,7 @@ const App = () => {
         problem={problems[currentProblemIndex]}
         onSubmit={handleAnswerSubmission}
       />
+      <button onClick={handleNextProblem}>Next Problem</button>
       <Editor />
       <Result userAnswers={userAnswers} problems={problems} />
     </>
