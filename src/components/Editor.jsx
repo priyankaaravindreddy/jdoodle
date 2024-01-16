@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import MonacoEditor from '@monaco-editor/react';
 
-const Editor = () => {
+const Editor = ({onSave}) => {
   const [code, setCode] = useState('');
 
   const handleCodeChange = (newCode) => {
@@ -11,18 +11,19 @@ const Editor = () => {
 
   const handleTestCode = () => {
      console.log('Testing code:', code);
+     onSave(code)
   };
 
   return (
     <div>
       <h2>Code Editor</h2>
       <MonacoEditor
-        height="600vh"
+        height="60vh"
         defaultLanguage="javascript"
         defaultValue={code}
         onChange={handleCodeChange}
       />
-      <button onClick={handleTestCode}>Test Code</button>
+      <button onClick={handleTestCode}>Test Code And Save</button>
     </div>
   );
 };
