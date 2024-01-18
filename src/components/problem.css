@@ -1,0 +1,23 @@
+.problemContainer {
+    padding: 15px;
+}
+
+.problemQues {
+    font-size: 25px;
+    color: #342424;
+    font-weight: 500;
+}
+
+.problemDesc {
+    color: gray;
+    margin-bottom: 10px;
+}
+
+.problemSubmit {
+    border: none;
+    border-radius: 2px;
+    padding: 10px 40px;
+    background-color: #8BC34A;
+    color: white;
+    font-size: 20px;
+}

@@ -1,29 +1,21 @@
 // Editor.js
 import React, { useState } from 'react';
 import MonacoEditor from '@monaco-editor/react';
+import './editor.css'
 
-const Editor = ({onSave}) => {
-  const [code, setCode] = useState('');
-
-  const handleCodeChange = (newCode) => {
-    setCode(newCode);
-  };
-
-  const handleTestCode = () => {
-     console.log('Testing code:', code);
-     onSave(code)
-  };
+const Editor = ({
+  code = '', handleCodeChange,
+}) => {
 
   return (
-    <div>
-      <h2>Code Editor</h2>
+    <div className="editorContainer">
       <MonacoEditor
         height="60vh"
         defaultLanguage="javascript"
         defaultValue={code}
         onChange={handleCodeChange}
+        theme="vs-light"
       />
-      <button onClick={handleTestCode}>Test Code And Save</button>
     </div>
   );
 };

@@ -1,11 +1,12 @@
 import React from 'react';
+import './problem.css';
 
 const Problem = ({ problem  }) => {
 
-  return (
-    <div>
-      <h2>{problem?.question}</h2>
-      <p>{problem?.description}</p>
+  return (    
+    <div className="problemContainer">
+        <div className="problemQues">{problem?.question? `Ques: ${problem.question}`: ''}</div>
+        <div className="problemDesc">{problem?.description}</div>
     </div>
   );
 };

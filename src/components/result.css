@@ -1,0 +1,11 @@
+.resultArea {
+    width: 100%;
+    box-shadow: 0px 0px 3px #666;
+    height: calc( 100% - 80px );
+}
+
+.resultContainer {
+    width: 50%;
+    background-color: #fff;
+    padding: 20px;
+}
