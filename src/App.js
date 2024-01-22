@@ -9,19 +9,20 @@ import { questions } from "./sample-questions";
 
 const App = () => {
   const [problems, setProblems] = useState([...questions]);
-  const [userAnswers, setUserAnswers] = useState([]);
+  const [results, setResults] = useState("");
+  const [userAnswers, setUserAnswers] = useState(Array(10).fill(undefined));
   const [currentProblemIndex, setCurrentProblemIndex] = useState(0);
 
-  const submitAnswers = async (code, problems) => {
-    const apiEndpoint = "https://api.jdoodle.com/v1/execute";
+  const submitAnswers = async () => {
+    const apiEndpoint = "http://localhost:3001/execute";
 
     try {
       const response = await axios.post(apiEndpoint, {
         clientId: "c0fad38eb03eaa700c9310748610fad1",
         clientSecret:
-          "a209966846744088f30ca130dd6251a3647a7e6efc3a95f138b063a9fbdc4ca8",
-        script: code,
-        stdin: JSON.stringify(problems),
+          "186d3ff06d71925162ea140679478958f95d3349333a3fc9585eaaa18eb0c5a3",
+        useAnswers: userAnswers,
+        problems: problems,
         language: "php",
         versionIndex: 0,
       });
@@ -44,13 +45,14 @@ const App = () => {
     console.log("connection succeeded");
 
     socketClient.subscribe("/user/queue/execute-i", (message) => {
-      console.log("message ",message);
+      console.log("message ", message);
       let msgId = message.headers["message-id"];
       let msgSeq = parseInt(msgId.substring(msgId.lastIndexOf("-") + 1));
 
       let statusCode = parseInt(message.headers.statusCode);
 
-      if (statusCode === 201) {
+      if (statusCode === 201 || statusCode === 200) {
+        setResults(JSON.stringify(message));
         // this.wsNextId = msgSeq + 1;
         return;
       }
@@ -84,40 +86,11 @@ const App = () => {
 
       // this.wsNextId = msgSeq + 1;
     });
-
-    //   let script = ` import java.util.Scanner;
-    //  import java.util.NoSuchElementException;
-
-    // public class MyClass {
-    //  public static void main(String args[]) {
-    //     Scanner scanner = new Scanner(System.in);
-
-    //     try {
-    //      System.out.println("Type a Line and enter....");
-    //     String txt = scanner.nextLine();
-    //     System.out.println("You have typed...");
-    //     System.out.println(txt);
-    //     } catch (NoSuchElementException e) {
-    //         System.out.println("Type something in the Stdin box above....");
-    //     }
-
-    //   }
-    // }`;
-
-    // let data = JSON.stringify({
-    //   script: script,
-    //   language: "java",
-    //   versionIndex: 4,
-    // });
   }, [socketClient]);
 
   const onWsConnectionFailed = useCallback(() => {
     console.log("I am not connected");
-  });
-
-  // useEffect(() => {
-  //   submitAnswers('print("Hello, World!")', []);
-  // }, []);
+  }, []);
 
   useEffect(() => {
     // Set up the WebSocket client without connecting
@@ -150,30 +123,31 @@ const App = () => {
     };
   }, [onWsConnection, onWsConnectionFailed, socketClient]);
 
+  useEffect(() => {
+    setCode("");
+  }, [userAnswers]);
+
+  const handleAnswerSave = () => {
+    setUserAnswers((prevAnswers) => {
+      console.log("anser ", code, currentProblemIndex);
+      const tempAnswers = [...prevAnswers];
+      tempAnswers.splice(currentProblemIndex, 1, code);
+      console.log("tempAnswer", tempAnswers);
+      return tempAnswers;
+    });
+  };
   const handleNextProblem = () => {
+    handleAnswerSave();
     if (currentProblemIndex < problems.length - 1) {
       setCurrentProblemIndex(currentProblemIndex + 1);
-    } else {
-      // Display results or submit answers using JDoodle's REST API
-      submitAnswers();
     }
   };
 
   const handlePreviousProblem = () => {
+    handleAnswerSave();
     if (currentProblemIndex > 0) {
       setCurrentProblemIndex(currentProblemIndex - 1);
     }
-  };
-
-  const handleAnswerSave = (answer) => {
-    setUserAnswers(() => {
-      console.log("anser", answer);
-      const tempAnswers = [...userAnswers];
-      tempAnswers.splice(currentProblemIndex, 1, answer);
-      console.log("tempAnswer", tempAnswers);
-      return tempAnswers;
-    });
-    setCurrentProblemIndex(currentProblemIndex + 1);
   };
 
   const handleTestCode = async () => {
@@ -183,16 +157,17 @@ const App = () => {
       const response = await axios.post(apiEndpoint, {
         clientId: "c0fad38eb03eaa700c9310748610fad1",
         clientSecret:
-          "6e2dbb19edc0b53bbe2354fa188dcfc1b194bda2f532b6fa94237cc57d0fa94d",
+          "fb579404de6f715b013255b59c671e9cc65ecbc09fb0f963b93c5c6e5e7f518a",
       });
 
       const apiResults = response;
       let data = JSON.stringify({
         clientId: "c0fad38eb03eaa700c9310748610fad1",
         clientSecret:
-          "6e2dbb19edc0b53bbe2354fa188dcfc1b194bda2f532b6fa94237cc57d0fa94d",
+          "fb579404de6f715b013255b59c671e9cc65ecbc09fb0f963b93c5c6e5e7f518a",
         language: "php",
-        script: 'echo "Enter a string: ";$inputString = rtrim(fgets(STDIN), "\n"); $reversedString = strrev($inputString); echo "Original String: $inputString\n";echo "Reversed String: $reversedString\n";',
+        // script: 'echo "Enter a string: ";$inputString = rtrim(fgets(STDIN), "\n"); $reversedString = strrev($inputString); echo "Original String: $inputString\n";echo "Reversed String: $reversedString\n";',
+        script: `<?php ${code} ?>`,
         stdin: "[priyanka]",
         versionIndex: 0,
       });
@@ -204,27 +179,30 @@ const App = () => {
     } catch (error) {
       console.error("Error calling JDoodle API:", error);
     }
-    console.log("Testing code:", code);
-    // handleAnswerSave(code);
   };
-
   return (
     <>
       <div className="problem">
-        <Problem problem={problems[currentProblemIndex]} />
+        <Problem
+          problem={problems[currentProblemIndex]}
+          idx={currentProblemIndex}
+        />
         <div className="problemBtns">
-          <button className="problemPrevious" onClick={handlePreviousProblem}>
+          <button
+            className="problemPrevious"
+            onClick={handlePreviousProblem}
+            disabled={currentProblemIndex === 0}
+          >
             Previous Problem
           </button>
-          <button className="problemNext" onClick={handleNextProblem}>
+          <button
+            className="problemNext"
+            onClick={handleNextProblem}
+            disabled={currentProblemIndex === 9}
+          >
             Next Problem
           </button>
-          <button
-            className="problemSubmit"
-            onClick={() =>
-              submitAnswers(userAnswers[0], problems[0]?.testCases)
-            }
-          >
+          <button className="problemSubmit" onClick={() => submitAnswers()}>
             Submit
           </button>
         </div>
@@ -232,12 +210,18 @@ const App = () => {
 
       <div className="codeBox">
         <div className="codeBoxArea">
-          <Editor code={code} handleCodeChange={handleCodeChange} />
-          <Result userAnswers={userAnswers} problems={problems} />
+          <Editor
+            userAnswer={userAnswers[currentProblemIndex]}
+            currentProblemIndex={currentProblemIndex}
+            handleCodeChange={handleCodeChange}
+          />
+          <Result results={results} />
         </div>
-        <button type="button" onClick={handleTestCode} className="testCode">
-          Test Code
-        </button>
+        {code && (
+          <button type="button" onClick={handleTestCode} className="testCode">
+            Test Code
+          </button>
+        )}
       </div>
     </>
   );
